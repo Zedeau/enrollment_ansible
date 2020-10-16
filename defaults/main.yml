@@ -5,12 +5,9 @@
 #login: "admin"
 #password: "password"
 
-# Group and user
-adm_group: 
-gid_adm_group: 
+# user
 rex_user: 
 home_dir: 
-folder:
 
 # Repos to activate on the hosts
 #repos: "rhel-7-server-satellite-tools-6.7-rpms,rhel-server-rhscl-7-rpms,rhel-7-server-rh-common-rpms,rhel-7-server-rpms,rhel-7-server-extras-rpms"
@@ -19,4 +16,3 @@ repos: "*"
 # Vars for the bootstrap script
 download_method: http
 bootstrap_path: /tmp/bootstrap.py
-
