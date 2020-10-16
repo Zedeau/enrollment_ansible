@@ -8,11 +8,8 @@ Example of a playbook.yml
 ```
 - hosts: all
   vars:
-    adm_group: group_name
-    gid_adm_group: group_gid
     rex_user: remote_user
     home_dir: "home/dir"
-    folder: "folder/to/create"
 # Repos to activate on the hosts
 #repos: "rhel-7-server-satellite-tools-6.7-rpms,rhel-server-rhscl-7-rpms,rhel-7-server-rh-common-rpms,rhel-7-server-rpms,rhel-7-server-extras-rpms"
     repos: "*"
@@ -33,7 +30,6 @@ Example of the hosts file
 testhost.local
 
 [Europe:vars]
-region=Europe
 foreman_fqdn=satellite.local
 organization="Startx"
 location="Europe/Paris"
