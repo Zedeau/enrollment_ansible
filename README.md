@@ -15,6 +15,7 @@ Example of a playbook.yml
     repos: "*"
     download_method: http
     bootstrap_path: /tmp/bootstrap.py
+    sudoers: /etc/sudoers
   vars_files:
 # Using ansible-vault
     - satellite_credentials.yml
