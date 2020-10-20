@@ -1,7 +1,7 @@
 # tasks file for enrollment_ansible
 
 #- name: register the foreman hostname
-#  shell: "grep '^hostname = sat6.u-pec.fr' /etc/rhsm/rhsm.conf"
+#  shell: "grep '^hostname = {{ foreman_fqdn }}' /etc/rhsm/rhsm.conf"
 #  ignore_errors: yes
 #  register: grep_return
 
