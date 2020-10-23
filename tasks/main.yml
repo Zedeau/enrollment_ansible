@@ -5,6 +5,8 @@
 #  ignore_errors: yes
 #  register: grep_return
 
+# Check if katello-ca is installed, if yes, host is registered to satellite, if not, host is not registered then run the block
+
 - name: block to run when the host is not registered to the Satellite
   block:
 #  when: grep_return.rc == 1
