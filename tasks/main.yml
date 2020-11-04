@@ -1,85 +1,79 @@
 # tasks file for enrollment_ansible
 
-- name: Register the retrun code for query of katello-ca
-  shell: "rpm -qa | grep katello-ca-consumer-{{ foreman_fqdn }}.noarch"
-  register: katello-ca
-
 - name: Register the retrun code for subscription-manager
-  shell: "subscription-manager repos"
-  register: subscription-manager
+  shell:
+    cmd: "subscription-manager repos"
+    warn: no
+  register: subscription_manager
 
-- name: Block to run when the host is not registered to the Satellite
-  block:
-  when: katello-ca.rc == 1
-  
-    - name: Ensure you have the latest version of subscription-manager 
-      yum:
-        name: subscription-manager
-        state: latest
-      when: subscription-manager.stdout != "This system has no repositories available through subscriptions."
-        
-    - name: Clean the subscription-manager config
-      shell: subscription-manager clean
+- name: Ensure you have the latest version of subscription-manager
+   yum:
+     name: subscription-manager
+     state: latest
+   when: subscription_manager.stdout != "This system has no repositories available through subscriptions."
 
-    - name: Disable subscription-manager plugin for yum
-      lineinfile:
-        path: /etc/yum/pluginconf.d/subscription-manager.conf
-        regexp: '^enabled='
-        line: 'enabled=0'
+- name: Clean the subscription-manager config
+  shell: subscription-manager clean
 
-    - name: Remove previous registration data
-      file:
-        path: /etc/pki/consumed/cert.pem
-        state: absent
+- name: Disable subscription-manager plugin for yum
+  lineinfile:
+    path: /etc/yum/pluginconf.d/subscription-manager.conf
+    regexp: '^enabled='
+    line: 'enabled=0'
 
-    - name: Remove Satellite 5 registration locally
-      file:
-        path: /etc/sysconfig/rhn/systemid
-        state: absent
-      
-    - name: Find and register all the files in /etc/yum.repos.d/
-      find:
-        paths: /etc/yum.repos.d/
-        patterns: '*.repo,*.rpmnew'
-      register: repos_conf
+- name: Remove previous registration data
+  file:
+    path: /etc/pki/consumed/cert.pem
+    state: absent
 
-    - name: Backup the files in /etc/yum.repos.d/
-      command: "mv {{ item.path }} {{ item.path }}.bak.{{ timestamp }}"
-      with_items: "{{ repos_conf.files }}"
+- name: Remove Satellite 5 registration locally
+  file:
+    path: /etc/sysconfig/rhn/systemid
+    state: absent
 
-    - name: Ensure remote execution user {{ rex_user }} exists
-      user:
-        name: "{{ rex_user }}"
-        home: "{{ home_dir }}"
-        expires: -1
+- name: Find and register all the files in /etc/yum.repos.d/
+  find:
+    paths: /etc/yum.repos.d/
+    patterns: '*.repo,*.rpmnew'
+  register: repos_conf
 
-    - name: Ensure {{ rex_user }} user is in the sudoers
-      lineinfile:
-        create: yes
-        path: "{{ sudoers }}"
-        state: present
-        line: "{{ rex_user }} ALL = (root) NOPASSWD: ALL"
+- name: Backup the files in /etc/yum.repos.d/
+  command: "mv {{ item.path }} {{ item.path }}.bak.{{ timestamp }}"
+  with_items: "{{ repos_conf.files }}"
 
-    - name: Download bootstrap.py from {{ foreman_fqdn }}
-      get_url:
-        dest: "{{ bootstrap_path }}"
-        url: "{{ download_method }}://{{ foreman_fqdn }}/pub/bootstrap.py"
-        
-    - name: Operating system definition for RHEL hosts
-      set_fact:
-        ansible_distribution: "RHEL Server"
-      when: ansible_distribution == "RedHat"
+- name: Ensure remote execution user {{ rex_user }} exists
+  user:
+    name: "{{ rex_user }}"
+    home: "{{ home_dir }}"
+    expires: -1
 
-    - name: Generate bootstrap.py arguments
-      set_fact:
-        bootstrap_args: "--server {{ foreman_fqdn }} --organization '{{ organization }}' --location '{{ location }}' --activationkey '{{ activationkey }}' --download-method {{ download_method }} --rex --rex-user {{ rex_user }} --enablerepos {{ repos }}"
-        bootstrap_foreman_args: "{% if password != '' %}--login '{{ login }}' --password '{{ password }}' --hostgroup '{{ hostgroup }}'{% else %}--skip foreman{% endif %}"
-        bootstrap_additional_args: "--skip katello-agent --skip puppet --operatingsystem '{{ ansible_distribution }} {{ ansible_distribution_version }}' --fqdn {{ ansible_hostname }} --force"
+- name: Ensure {{ rex_user }} user is in the sudoers
+  lineinfile:
+    create: yes
+    path: "{{ sudoers }}"
+    state: present
+    line: "{{ rex_user }} ALL = (root) NOPASSWD: ALL"
 
-    - name: Run bootstrap.py
-      shell: "python {{ bootstrap_path }} {{ bootstrap_args }} {{ bootstrap_foreman_args }} {{ bootstrap_additional_args }}"
+- name: Download bootstrap.py from {{ foreman_fqdn }}
+  get_url:
+    dest: "{{ bootstrap_path }}"
+    url: "{{ download_method }}://{{ foreman_fqdn }}/pub/bootstrap.py"
 
-    - name: Remove bootstrap.py
-      file:
-        path: "{{ bootstrap_path }}"
-        state: absent
+- name: Operating system definition for RHEL hosts
+  set_fact:
+    ansible_distribution: "RHEL Server"
+  when: ansible_distribution == "RedHat"
+
+- name: Generate bootstrap.py arguments
+  set_fact:
+    bootstrap_args: "--server {{ foreman_fqdn }} --organization '{{ organization }}' --location '{{ location }}' --activationkey '{{ activationkey }}' --download-method {{ download_method }} --rex --rex-user {{ rex_user }} --enablerepos {{ repos }}"
+    bootstrap_foreman_args: "{% if password != '' %}--login '{{ login }}' --password '{{ password }}' --hostgroup '{{ hostgroup }}'{% else %}--skip foreman{% endif %}"
+    bootstrap_additional_args: "--skip katello-agent --skip puppet --operatingsystem '{{ ansible_distribution }} {{ ansible_distribution_version }}' --fqdn {{ ansible_hostname }} --force"
+
+- name: Run bootstrap.py
+  shell: "python {{ bootstrap_path }} {{ bootstrap_args }} {{ bootstrap_foreman_args }} {{ bootstrap_additional_args }}"
+
+- name: Remove bootstrap.py
+  file:
+    path: "{{ bootstrap_path }}"
+    state: absent
