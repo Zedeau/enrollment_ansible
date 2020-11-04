@@ -50,12 +50,17 @@
       get_url:
         dest: "{{ bootstrap_path }}"
         url: "{{ download_method }}://{{ foreman_fqdn }}/pub/bootstrap.py"
+        
+    - name: operating system definition
+      set_fact:
+        ansible_distribution: "RHEL Server"
+      when: ansible_distribution == "RedHat"
 
     - name: generate bootstrap.py arguments
       set_fact:
         bootstrap_args: "--server {{ foreman_fqdn }} --organization '{{ organization }}' --location '{{ location }}' --activationkey '{{ activationkey }}' --download-method {{ download_method }} --rex --rex-user {{ rex_user }} --enablerepos {{ repos }}"
         bootstrap_foreman_args: "{% if password != '' %}--login '{{ login }}' --password '{{ password }}' --hostgroup '{{ hostgroup }}'{% else %}--skip foreman{% endif %}"
-        bootstrap_additional_args: "--skip katello-agent --skip puppet --operatingsystem 'RHEL Server {{ ansible_distribution_version }}' --fqdn {{ ansible_hostname }} --force"
+        bootstrap_additional_args: "--skip katello-agent --skip puppet --operatingsystem '{{ ansible_distribution }} {{ ansible_distribution_version }}' --fqdn {{ ansible_hostname }} --force"
 
     - name: run bootstrap.py
       command: "python {{ bootstrap_path }} {{ bootstrap_args }} {{ bootstrap_foreman_args }} {{ bootstrap_additional_args }}"
