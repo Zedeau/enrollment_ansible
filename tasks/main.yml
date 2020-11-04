@@ -34,7 +34,8 @@
         path: /etc/sysconfig/rhn/systemid
         state: absent
 
-    - copy:
+    - name: make a backup of all the repos in /etc/yum.repos.d/
+      copy:
         src: "{{ item }}"
         dest: "{{ item }}.bak"
       with_fileglob:
