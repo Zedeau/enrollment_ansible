@@ -1,21 +1,24 @@
 ---
 # defaults file for enrollment_ansible
 
-# Below need to be in a vault
-#login: "admin"
-#password: "password"
+# Below variables need to be in an ansible-vault
+#login: "foreman-admin"
+#password: "foreman-password"
 
-# user
+# Timestamp for backup
+timestamp: "{{ lookup('pipe', 'date +%Y%m%d%H%M') }}"
+
+# Remote execution user
 rex_user: 
 home_dir: 
 
-# path to the sudoers file
+# Path to the sudoers file
 sudoers:
 
 # Repos to activate on the hosts
 #repos: "rhel-7-server-satellite-tools-6.7-rpms,rhel-server-rhscl-7-rpms,rhel-7-server-rh-common-rpms,rhel-7-server-rpms,rhel-7-server-extras-rpms"
 repos: "*"
 
-# Vars for the bootstrap script
+# Vars for the bootstrap.py script
 download_method: http
 bootstrap_path: /tmp/bootstrap.py
