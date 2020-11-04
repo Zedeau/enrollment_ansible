@@ -34,6 +34,12 @@
         path: /etc/sysconfig/rhn/systemid
         state: absent
 
+    - copy:
+        src: "{{ item }}"
+        dest: "{{ item }}.bak"
+      with_fileglob:
+        - /etc/yum.repos.d/*
+
     - name: ensure remote execution user {{ rex_user }} exists
       user:
         name: "{{ rex_user }}"
