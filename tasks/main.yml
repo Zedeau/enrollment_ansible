@@ -42,6 +42,7 @@
 
     - name: ensure {{ rex_user }} user is in the sudoers
       lineinfile:
+        create: yes
         path: "{{ sudoers }}"
         state: present
         line: "{{ rex_user }} ALL = (root) NOPASSWD: ALL"
