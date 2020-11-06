@@ -1,8 +1,13 @@
 ---
 # tasks file for enrollment_ansible
 
+- name: Ensure the latest vesrion of subscription-manager is installed
+  package:
+    name: subscription-manager
+    state: latest
+
 - name: Clean the subscription-manager config
-  shell: subscription-manager clean
+  shell: 'subscription-manager clean'
 
 - name: Disable subscription-manager plugin for yum
   lineinfile:
