@@ -27,8 +27,10 @@ Example of a playbook.yml
 Example of the hosts file
 
 ```
-[Europe]
-testhost.local
+[all:vars]
+foreman_fqdn=satellite.zed.corp
+organization="Zed_Corp"
+location="Paris"
 
 [Europe:vars]
 env=Production
