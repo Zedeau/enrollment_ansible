@@ -31,11 +31,11 @@ Example of the hosts file
 testhost.local
 
 [Europe:vars]
-foreman_fqdn=satellite.local
-organization="Startx"
-location="Europe/Paris"
-activationkey="AK_RHEL7"
-hostgroup="HG_RHEL7"
+env=Production
+
+[Europe]
+host1
+host2
 ```
 
 
