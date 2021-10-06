@@ -7,7 +7,7 @@
 - name: Disable subscription-manager plugin for yum
   lineinfile:
     path: /etc/yum/pluginconf.d/subscription-manager.conf
-    regexp: '^enabled='
+    regexp: '^enabled=*'
     line: 'enabled=0'
 
 - name: Remove previous registration data
@@ -30,37 +30,42 @@
   command: "mv {{ item.path }} {{ item.path }}.bak.{{ timestamp }}"
   with_items: "{{ repos_conf.files }}"
 
-- name: Ensure remote execution user {{ rex_user }} exists
-  user:
-    name: "{{ rex_user }}"
-    home: "{{ home_dir }}"
-    expires: -1
-
-- name: Ensure {{ rex_user }} user is in the sudoers
-  lineinfile:
-    create: yes
-    path: "{{ sudoers }}"
-    state: present
-    line: "{{ rex_user }} ALL = (root) NOPASSWD: ALL"
 
 - name: Download bootstrap.py from {{ foreman_fqdn }}
   get_url:
     dest: "{{ bootstrap_path }}"
     url: "{{ download_method }}://{{ foreman_fqdn }}/pub/bootstrap.py"
 
-- name: Operating system definition for RHEL hosts
+- name: Set OS distribution for RHEL
   set_fact:
-    ansible_distribution: "RHEL Server"
-  when: ansible_distribution == "RedHat"
+    distrib: RHEL
+  when: ansible_distribution == 'RedHat'
+
+- name: Set OS distribution for CentOS
+  set_fact:
+    distrib: CENTOS
+  when: ansible_distribution == 'CentOS'
+
+
+- name: Set Activation key and Hostgroup for this host
+  set_fact:
+    activationkey: "AK_{{ distrib }}{{ ansible_distribution_major_version }}_{{ env }}"
+    hostgroup: "HG_{{ distrib }}{{ ansible_distribution_major_version }}_{{ env }}"
+
 
 - name: Generate bootstrap.py arguments
   set_fact:
-    bootstrap_args: "--server '{{ foreman_fqdn }}' --organization '{{ organization }}' --location '{{ location }}' --download-method '{{ download_method }}' --fqdn '{{ ansible_hostname }}' --enablerepos '{{ repos }}'"
+    bootstrap_args: "--server '{{ foreman_fqdn }}' --organization '{{ organization }}' --location '{{ location }}' --download-method '{{ download_method }}' --fqdn '{{ ansible_fqdn }}' --enablerepos '{{ repos }}'"
     bootstrap_foreman_args: "{% if password != '' %}--login '{{ login }}' --password '{{ password }}' --hostgroup '{{ hostgroup }}'{% else %}--skip foreman{% endif %} --activationkey '{{ activationkey }}'"
-    bootstrap_additional_args: "--skip katello-agent --skip puppet --force --rex --rex-user '{{ rex_user }}' --operatingsystem '{{ ansible_distribution }} {{ ansible_distribution_version }}'"
+    bootstrap_additional_args: "--skip katello-agent --skip puppet --force --rex --operatingsystem '{{ ansible_distribution }} {{ ansible_distribution_major_version }}' --ignore-registration-failures --add-domain"
 
-- name: Run bootstrap.py
+- name: Run bootstrap.py for RHEL 6 and 7
   shell: "python {{ bootstrap_path }} {{ bootstrap_args }} {{ bootstrap_foreman_args }} {{ bootstrap_additional_args }}"
+  when: ansible_distribution_major_version != '8'
+
+- name: Run bootstrap.py for RHEL 8
+  shell: "python3 {{ bootstrap_path }} {{ bootstrap_args }} {{ bootstrap_foreman_args }} {{ bootstrap_additional_args }}"
+  when: ansible_distribution_major_version == '8'
 
 - name: Remove bootstrap.py
   file:
